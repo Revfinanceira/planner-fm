@@ -483,7 +483,7 @@ label{font-size:.68rem;color:var(--cz);letter-spacing:.8px;text-transform:upperc
 var CLIENT_ID = '1035236116849-cbphtr692j0n982s6tq9hlbt2d37mvls.apps.googleusercontent.com';
 var CLIENT_SECRET = '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';
 var DRIVE_FILE_ID = '1ehzVr1ZFWP-9OFd5EXUS0VLJqgdLxk0G';
-var REDIRECT_URI = 'https://revfinanceira.github.io/planner-fm/';
+var REDIRECT_URI = 'https://revfinanceira.github.io/planner-fm/planner_fernando_v9b.html';
 var SCOPE = 'https://www.googleapis.com/auth/drive.file';
 
 var accessToken = null;
@@ -580,12 +580,14 @@ function renovarToken(){
 }
 
 function prosseguir(){
+  setTimeout(function(){
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('driveBar').style.display = 'flex';
   setDriveStatus('sync','Carregando dados...');
   carregarDrive();
   // Renova token a cada 50 minutos
   setInterval(renovarToken, 50 * 60 * 1000);
+  }, 500);
 }
 
 // ============================================================
