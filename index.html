@@ -580,14 +580,11 @@ function renovarToken(){
 }
 
 function prosseguir(){
-  setTimeout(function(){
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('driveBar').style.display = 'flex';
   setDriveStatus('sync','Carregando dados...');
-  carregarDrive();
-  // Renova token a cada 50 minutos
+  setTimeout(function(){ carregarDrive(); }, 300);
   setInterval(renovarToken, 50 * 60 * 1000);
-  }, 500);
 }
 
 // ============================================================
