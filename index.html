@@ -482,8 +482,8 @@ label{font-size:.68rem;color:var(--cz);letter-spacing:.8px;text-transform:upperc
 // ============================================================
 var CLIENT_ID = '1035236116849-cbphtr692j0n982s6tq9hlbt2d37mvls.apps.googleusercontent.com';
 var CLIENT_SECRET = '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';
-var DRIVE_FILE_ID = '1X8BGaBSZRS44hhGq9RRQRaYEhim91E7y';
-var REDIRECT_URI = 'https://revfinanceira.github.io/planner-fm/';
+var DRIVE_FILE_ID = '1oNkjehIst5vMJPpgxWAhkIyT4Omy7Uuw';
+var REDIRECT_URI = 'https://revfinanceira.github.io/planner-fm/planner_fernando_v9b.html';
 var SCOPE = 'https://www.googleapis.com/auth/drive.file';
 
 var accessToken = null;
@@ -583,7 +583,7 @@ function prosseguir(){
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('driveBar').style.display = 'flex';
   setDriveStatus('sync','Carregando dados...');
-  setTimeout(function(){ carregarDrive(); }, 300);
+  setTimeout(function(){ carregarDrive(); }, 500);
   setInterval(renovarToken, 50 * 60 * 1000);
 }
 
@@ -596,17 +596,36 @@ function carregarDrive(){
   })
   .then(function(r){
     if(r.status===401){renovarToken();return null;}
-    return r.json();
+    if(r.status===404){setDriveStatus('err','Arquivo não encontrado');carregarLocal();iniciarApp();return null;}
+    return r.text();
   })
-  .then(function(data){
-    if(!data)return;
-    DB = data;
-    Object.keys(DB).forEach(function(k){localStorage.setItem('fm7_'+k,JSON.stringify(DB[k]));});
-    setDriveStatus('ok','Drive conectado ✓');
-    iniciarApp();
+  .then(function(txt){
+    if(!txt)return;
+    try{
+      DB = JSON.parse(txt);
+      Object.keys(DB).forEach(function(k){localStorage.setItem('fm7_'+k,JSON.stringify(DB[k]));});
+      setDriveStatus('ok','Drive conectado ✓');
+      iniciarApp();
+    } catch(e){
+      // Arquivo foi convertido para Google Docs — exporta como texto
+      fetch('https://www.googleapis.com/drive/v3/files/' + DRIVE_FILE_ID + '/export?mimeType=text/plain', {
+        headers:{'Authorization':'Bearer ' + accessToken}
+      })
+      .then(function(r2){return r2.text();})
+      .then(function(txt2){
+        try{
+          var clean = txt2.replace(/ï»¿/g,'').trim();
+          DB = JSON.parse(clean);
+        } catch(e2){ DB = {}; }
+        Object.keys(DB).forEach(function(k){localStorage.setItem('fm7_'+k,JSON.stringify(DB[k]));});
+        setDriveStatus('ok','Drive conectado ✓');
+        iniciarApp();
+      })
+      .catch(function(){carregarLocal();iniciarApp();});
+    }
   })
   .catch(function(){
-    setDriveStatus('err','Erro ao carregar — usando backup local');
+    setDriveStatus('err','Erro ao carregar');
     carregarLocal();
     iniciarApp();
   });
