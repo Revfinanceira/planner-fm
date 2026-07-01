@@ -343,7 +343,7 @@ label{font-size:.68rem;color:var(--cz);letter-spacing:.8px;text-transform:upperc
 <div class="hdr">
   <div class="hdr-inner">
     <div>
-      <span class="hdr-tag">✦ Planner Estratégico v10</span>
+      <span class="hdr-tag">✦ Planner Estratégico v16</span>
       <h1>Fernando <span>Martins</span></h1>
       <p>Consultor Financeiro Pessoal • @ofernandofinancas • 2026</p>
     </div>
@@ -380,9 +380,18 @@ label{font-size:.68rem;color:var(--cz);letter-spacing:.8px;text-transform:upperc
   <div class="st">Visão <span>Geral</span></div>
   <div class="ss">Mês vigente — todos os dados sincronizados em tempo real</div>
   <div class="kg" id="kpiGrid"></div>
+  <div id="chartVisaoBox" class="chart-box" style="position:relative;margin-bottom:22px;">
+    <canvas id="chartProjVisao" height="220"></canvas>
+    <div id="chartTipVisao" style="display:none;position:absolute;background:var(--az2);border:1px solid rgba(201,168,76,.3);border-radius:10px;padding:10px 14px;font-size:.76rem;color:var(--br);pointer-events:none;z-index:10;min-width:160px;box-shadow:0 4px 20px rgba(0,0,0,.4);"></div>
+    <div class="chart-legend" style="margin-top:10px;">
+      <span><span class="leg-dot" style="background:#C9A84C"></span>W1</span>
+      <span><span class="leg-dot" style="background:#4A9EFF"></span>FM</span>
+      <span><span class="leg-dot" style="background:#E74C3C"></span>Curso</span>
+      <span><span class="leg-dot" style="background:#E67E22"></span>Palestras</span>
+      <span><span class="leg-dot" style="background:rgba(255,255,255,.85)"></span>Meta</span>
+    </div>
+  </div>
   <div class="pitch"><div class="ptxt">É só não parar!</div></div>
-  <div class="st" style="font-size:1.1rem;margin-bottom:12px;">Progresso das Frentes</div>
-  <div id="progWrap"></div>
 </div>
 
 <div id="prios" class="sec">
@@ -499,8 +508,9 @@ label{font-size:.68rem;color:var(--cz);letter-spacing:.8px;text-transform:upperc
     </div>
   </div>
   <div class="st" style="font-size:1.05rem;margin-bottom:12px;">📈 Projeção 12 Meses</div>
-  <div class="chart-box">
+  <div class="chart-box" style="position:relative;">
     <canvas id="chartProj" height="260"></canvas>
+    <div id="chartTip" style="display:none;position:absolute;background:var(--az2);border:1px solid rgba(201,168,76,.3);border-radius:10px;padding:10px 14px;font-size:.76rem;color:var(--br);pointer-events:none;z-index:10;min-width:160px;box-shadow:0 4px 20px rgba(0,0,0,.4);"></div>
     <div class="chart-legend">
       <span><span class="leg-dot" style="background:#C9A84C"></span>W1</span>
       <span><span class="leg-dot" style="background:#4A9EFF"></span>FM</span>
@@ -517,6 +527,7 @@ label{font-size:.68rem;color:var(--cz);letter-spacing:.8px;text-transform:upperc
   <button onclick="exportarJSON()" style="background:transparent;color:var(--cz);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:6px 16px;font-size:.74rem;cursor:pointer;">📤 Exportar JSON</button>
   <button onclick="document.getElementById('importInput').click()" style="background:transparent;color:var(--azul);border:1px solid rgba(74,158,255,.3);border-radius:8px;padding:6px 16px;font-size:.74rem;cursor:pointer;">📥 Importar JSON</button>
   <input type="file" id="importInput" accept=".json" style="display:none" onchange="importarJSON(this)">
+  
 </div>
 
 <script>
@@ -1033,9 +1044,14 @@ function sync(){
 }
 
 // GRÁFICO
-function renderChart(){
-  var canvas=document.getElementById('chartProj');if(!canvas)return;
-  var ctx=canvas.getContext('2d');var W=canvas.parentElement.clientWidth-40||860;var H=260;
+var _cd={labels:[],aw1:[],afm:[],acurso:[],apal:[],ameta:[]};
+var _cdims={PAD:{t:22,r:18,b:38,l:64},BG:0,BW:0,maxV:0,CH:0};
+
+function _drawChart(canvas,tipId,H){
+  if(!canvas)return;
+  var ctx=canvas.getContext('2d');
+  var W=canvas.parentElement.clientWidth-40;
+  if(!W||W<50){setTimeout(function(){_drawChart(canvas,tipId,H);},100);return;}
   canvas.width=W;canvas.height=H;
   var PAD={t:22,r:18,b:38,l:64};var CW=W-PAD.l-PAD.r;var CH=H-PAD.t-PAD.b;
   var hoje=new Date();var meses=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
@@ -1046,28 +1062,49 @@ function renderChart(){
     labels.push(meses[d.getMonth()]+'/'+String(d.getFullYear()).slice(2));
     var m=getMetas(ms);ameta.push((+m.w1||0)+(+m.fm||0)+(+m.curso||0)+(+m.palestras||0));
     if(i===0){var r=calcReal(ms);aw1.push(r.w1);afm.push(r.fm);acurso.push(r.curso);apal.push(r.palestras);}
-    else{
-      // Projeção baseada em contratos ativos
-      var pw1=0;w1clis.forEach(function(c){pw1+=+c.mensal||0;if(apAtivaNoMes(c,ms)){if(c.ap==='avista')pw1+=+c.apval||0;if(c.ap==='parc')pw1+=+c.apvp||0;}(c.prods||[]).forEach(function(p){if(!p.prazo||p.prazo>=ms)pw1+=+p.val||0;});});
-      var pfm=0;fmclis.forEach(function(c){pfm+=+c.mensal||0;});
-      var palM=pals.filter(function(p){return p.data&&p.data.substring(0,7)===ms;}).reduce(function(a,p){return a+(+p.val||0);},0);
-      aw1.push(pw1);afm.push(pfm);acurso.push(0);apal.push(palM||+m.palestras||0);
-    }
+    else{var pw1=0;w1clis.forEach(function(c){pw1+=+c.mensal||0;if(apAtivaNoMes(c,ms)){if(c.ap==='avista')pw1+=+c.apval||0;if(c.ap==='parc')pw1+=+c.apvp||0;}(c.prods||[]).forEach(function(p){if(!p.prazo||p.prazo>=ms)pw1+=+p.val||0;});});
+    var pfm=0;fmclis.forEach(function(c){pfm+=+c.mensal||0;});
+    var palM=pals.filter(function(p){return p.data&&p.data.substring(0,7)===ms;}).reduce(function(a,p){return a+(+p.val||0);},0);
+    aw1.push(pw1);afm.push(pfm);acurso.push(0);apal.push(palM||+m.palestras||0);}
   }
+  // Save for tooltip
+  _cd={labels:labels,aw1:aw1,afm:afm,acurso:acurso,apal:apal,ameta:ameta};
+  _cdims={PAD:PAD,BG:CW/12,BW:CW/12*0.58,maxV:0,CH:CH};
   var maxV=0;for(var j=0;j<12;j++){var tot=aw1[j]+afm[j]+acurso[j]+apal[j];if(tot>maxV)maxV=tot;if(ameta[j]>maxV)maxV=ameta[j];}
-  maxV=maxV*1.15||1000;
+  maxV=maxV*1.15||1000;_cdims.maxV=maxV;
   ctx.clearRect(0,0,W,H);
   for(var g=0;g<=4;g++){var y=PAD.t+CH-(g/4)*CH;ctx.strokeStyle='rgba(255,255,255,.05)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(PAD.l,y);ctx.lineTo(PAD.l+CW,y);ctx.stroke();ctx.fillStyle='rgba(139,173,196,.45)';ctx.textAlign='right';ctx.font='10px sans-serif';ctx.fillText('R$'+Math.round(maxV*g/4/1000)+'k',PAD.l-5,y+4);}
   var cores=['#C9A84C','#4A9EFF','#E74C3C','#E67E22'];var BW=CW/12*0.58;var BG=CW/12;
-  for(var i=0;i<12;i++){
-    var x=PAD.l+i*BG+(BG-BW)/2;var stacks=[aw1[i],afm[i],acurso[i],apal[i]];var cy=PAD.t+CH;
-    stacks.forEach(function(v,si){var h=v/maxV*CH;ctx.fillStyle=cores[si];ctx.fillRect(x,cy-h,BW,h);cy-=h;});
-    ctx.fillStyle='rgba(139,173,196,.5)';ctx.textAlign='center';ctx.font='9px sans-serif';ctx.fillText(labels[i],x+BW/2,H-6);
-  }
-  ctx.strokeStyle='rgba(255,255,255,.4)';ctx.lineWidth=1.5;ctx.setLineDash([5,4]);ctx.beginPath();
+  for(var i=0;i<12;i++){var x=PAD.l+i*BG+(BG-BW)/2;var stacks=[aw1[i],afm[i],acurso[i],apal[i]];var cy=PAD.t+CH;stacks.forEach(function(v,si){var h=v/maxV*CH;ctx.fillStyle=cores[si];ctx.fillRect(x,cy-h,BW,h);cy-=h;});ctx.fillStyle='rgba(139,173,196,.5)';ctx.textAlign='center';ctx.font='9px sans-serif';ctx.fillText(labels[i],x+BW/2,H-6);}
+  // Meta line
+  ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=2.5;ctx.setLineDash([6,4]);ctx.beginPath();
   var first=true;for(var i=0;i<12;i++){if(ameta[i]>0){var x=PAD.l+i*BG+BG/2;var y=PAD.t+CH-ameta[i]/maxV*CH;if(first){ctx.moveTo(x,y);first=false;}else ctx.lineTo(x,y);}}
   ctx.stroke();ctx.setLineDash([]);
+  // Tooltip
+  canvas.onmousemove=function(e){
+    var rect=canvas.getBoundingClientRect();var scaleX=canvas.width/rect.width;
+    var mx=(e.clientX-rect.left)*scaleX;
+    var BG2=_cdims.BG;var BW2=_cdims.BW;var i=-1;
+    for(var j=0;j<12;j++){var x=PAD.l+j*BG2+(BG2-BW2)/2;if(mx>=x&&mx<=x+BW2){i=j;break;}}
+    var tip=document.getElementById(tipId);
+    if(i<0){tip.style.display='none';return;}
+    var total=(_cd.aw1[i]||0)+(_cd.afm[i]||0)+(_cd.acurso[i]||0)+(_cd.apal[i]||0);
+    tip.style.display='block';tip.style.left=(e.clientX-rect.left+12)+'px';tip.style.top=(e.clientY-rect.top-10)+'px';
+    tip.innerHTML='<div style="font-weight:700;margin-bottom:5px;color:var(--gold)">'+_cd.labels[i]+'</div>'
+      +'<div>💼 W1: <span style="color:var(--gold)">'+fmtR(_cd.aw1[i]||0)+'</span></div>'
+      +'<div>🔵 FM: <span style="color:var(--azul)">'+fmtR(_cd.afm[i]||0)+'</span></div>'
+      +'<div>🎓 Curso: <span style="color:var(--vm)">'+fmtR(_cd.acurso[i]||0)+'</span></div>'
+      +'<div>🎤 Palestras: <span style="color:var(--lr)">'+fmtR(_cd.apal[i]||0)+'</span></div>'
+      +'<div style="border-top:1px solid rgba(255,255,255,.15);margin-top:5px;padding-top:5px;font-weight:600">Total: <span style="color:var(--verde)">'+fmtR(total)+'</span></div>'
+      +(_cd.ameta[i]?'<div>Meta: <span style="color:rgba(255,255,255,.6)">'+fmtR(_cd.ameta[i])+'</span></div>':'');
+  };
+  canvas.onmouseleave=function(){var tip=document.getElementById(tipId);if(tip)tip.style.display='none';};
 }
+
+function renderChart(){_drawChart(document.getElementById('chartProj'),'chartTip',260);}
+function renderChartVisao(){_drawChart(document.getElementById('chartProjVisao'),'chartTipVisao',220);}
+
+
 
 // EXPORTAR
 function exportarJSON(){
@@ -1090,6 +1127,23 @@ function initSonhos(){
     {id:'s6',ico:'🎓',nome:'Escola Particular',val:'Meta: R$20k/mês',prazo:'Enzo, Noah, Erick e Lucia',tipo:'normal'},
     {id:'s7',ico:'💰',nome:'Renda Passiva',val:'30k / mês',prazo:'Aos 35 anos',tipo:'normal'},
   ]);
+}
+
+
+function importarJSON(input){
+  var file=input.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var dados=JSON.parse(e.target.result);
+      var chaves=['fat','prios','sonhos','cliw1','clifm','vendas','pals','prosp','metas_por_mes','tar_w1','tar_fm','tar_curso','tar_palestras','tar_redes'];
+      chaves.forEach(function(k){if(dados[k]!==undefined)S.set(k,dados[k]);});
+      renderPrios();renderFreentes();renderListaW1();renderListaFM();renderVendas();renderPal();renderProsp();renderSonhos();renderClientes();sync();
+      toast('✅ Dados importados com sucesso!');
+    }catch(e){toast('❌ Arquivo inválido');}
+    input.value='';
+  };
+  reader.readAsText(file);
 }
 
 
