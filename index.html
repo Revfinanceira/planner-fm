@@ -343,7 +343,7 @@ label{font-size:.68rem;color:var(--cz);letter-spacing:.8px;text-transform:upperc
 <div class="hdr">
   <div class="hdr-inner">
     <div>
-      <span class="hdr-tag">✦ Planner Estratégico v18</span>
+      <span class="hdr-tag">✦ Planner Estratégico v19</span>
       <h1>Fernando <span>Martins</span></h1>
       <p>Consultor Financeiro Pessoal • @ofernandofinancas • 2026</p>
     </div>
@@ -380,17 +380,7 @@ label{font-size:.68rem;color:var(--cz);letter-spacing:.8px;text-transform:upperc
   <div class="st">Visão <span>Geral</span></div>
   <div class="ss">Mês vigente — todos os dados sincronizados em tempo real</div>
   <div class="kg" id="kpiGrid"></div>
-  <div id="chartVisaoBox" class="chart-box" style="position:relative;margin-bottom:22px;">
-    <canvas id="chartProjVisao" height="220" style="display:block;width:100%;"></canvas>
-    <div id="chartTipVisao" style="display:none;position:absolute;background:var(--az2);border:1px solid rgba(201,168,76,.3);border-radius:10px;padding:10px 14px;font-size:.76rem;color:var(--br);pointer-events:none;z-index:10;min-width:160px;box-shadow:0 4px 20px rgba(0,0,0,.4);"></div>
-    <div class="chart-legend" style="margin-top:10px;">
-      <span><span class="leg-dot" style="background:#C9A84C"></span>W1</span>
-      <span><span class="leg-dot" style="background:#4A9EFF"></span>FM</span>
-      <span><span class="leg-dot" style="background:#E74C3C"></span>Curso</span>
-      <span><span class="leg-dot" style="background:#E67E22"></span>Palestras</span>
-      <span><span class="leg-dot" style="background:rgba(255,255,255,.85)"></span>Meta</span>
-    </div>
-  </div>
+
   <div class="pitch"><div class="ptxt">É só não parar!</div></div>
 </div>
 
@@ -1065,7 +1055,7 @@ function _drawChart(canvas,tipId,H){
     else{var pw1=0;w1clis.forEach(function(c){pw1+=+c.mensal||0;if(apAtivaNoMes(c,ms)){if(c.ap==='avista')pw1+=+c.apval||0;if(c.ap==='parc')pw1+=+c.apvp||0;}(c.prods||[]).forEach(function(p){if(!p.prazo||p.prazo>=ms)pw1+=+p.val||0;});});
     var pfm=0;fmclis.forEach(function(c){pfm+=+c.mensal||0;});
     var palM=pals.filter(function(p){return p.data&&p.data.substring(0,7)===ms;}).reduce(function(a,p){return a+(+p.val||0);},0);
-    aw1.push(pw1);afm.push(pfm);acurso.push(0);apal.push(palM||+m.palestras||0);}
+    aw1.push(pw1);afm.push(pfm);acurso.push(0);apal.push(palM||0);}
   }
   // Save for tooltip
   _cd={labels:labels,aw1:aw1,afm:afm,acurso:acurso,apal:apal,ameta:ameta};
